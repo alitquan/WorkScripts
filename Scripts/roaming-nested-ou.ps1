@@ -1,18 +1,19 @@
-﻿$ous = Get-ADOrganizationalUnit -Filter 'Name -like "*"' | select Name, DistinguishedName 
+$ous = Get-ADOrganizationalUnit -Filter 'Name -like "*"' | select Name, DistinguishedName 
 echo "testing" 
 foreach($ou in $ous) {
 
    $arg1 = "$($ou.Name)"
    $arg2 = "$($ou.DistinguishedName)" 
-
-   #some OUs will not feature roaming profiles
-   if ($arg1 -eq "redacted") {
+   if ($arg1 -eq "IT") {
         continue 
    } 
    if ($arg1 -eq "Domain Controllers") {
         continue
    }
-   if ($arg1 -eq "redacted") {
+   if ($arg1 -eq "ouName1") {
+        continue
+   }
+   if ($arg1 -ne "ouName2") {
         continue
    }
 
@@ -24,11 +25,6 @@ foreach($ou in $ous) {
 
    $counter = 0
 
-   # path to profile storage
-   $origProfilePath = "\\insert_path\Roaming_Profiles$\"
-
-   # path to home folder storage
-   $origLocalPath   = "\\insert_path\Roaming_Home$\" 
    
    foreach ($user in $users) {
         $userAttrs = $user | Select Name, SamAccountName, ProfilePath, HomeDirectory, HomeDrive
@@ -36,10 +32,31 @@ foreach($ou in $ous) {
         echo $counter
         ++$counter
 
-        $profilePath = $origProfilePath + $($userAttrs.SamAccountName)
-        $localPath   = $origLocalPath + $($userAttrs.SamAccountName)
+        $username    = $($userAttrs.SamAccountName)
+        $profilePath = "\\serverName\Roaming_Profiles$\" + $username  
+        $homePath   = "\\servername\Home_Folders$\{0}" -f $username 
         
-        Set-ADUser $($userAttrs.SamAccountName) -ProfilePath $profilePath -HomeDirectory $localPath -HomeDrive H
+        try {
+            Set-ADUser $username  -ProfilePath $profilePath
+            Set-ADUser $username   -HomeDirectory $homePath -HomeDrive H:
+            $domain=((gwmi Win32_ComputerSystem).Domain).Split(".")[0]
+            
+            # adding permissions
+            if (-not (Test-Path "$homePath")) {
+                $acl = Get-Acl (New-Item -Path $homePath -ItemType Directory)
+                $acl.SetAccessRuleProtection($false, $true)
+                $ace = "$domain\$username","FullControl", "ContainerInherit,ObjectInherit","None","Allow"
+                $objACE = New-Object System.Security.AccessControl.FileSystemAccessRule($ace)
+                $acl.AddAccessRule($objACE)
+                Set-ACL -Path "$homePath" -AclObject $acl
+
+            }
+
+        }
+        catch {
+            Write-Host "Error: ${$_.Exception.Message)}"
+        }
+    
    } 
 
    
