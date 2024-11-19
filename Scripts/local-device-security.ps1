@@ -5,8 +5,8 @@ net accounts /uniquepw:5
 net accounts /minpwage:0 
 
 # creating storage partition 
-Resize-Partition -DriveLetter C -Size (Get-Partition -DriveLetter C).Size - 5GB
-New-Partition -DiskNumber 0 -Size 5GB -AssignDriveLetter -DriveLetter E
+Resize-Partition -DriveLetter C -Size ((Get-Partition -DriveLetter C).Size - 5GB)
+New-Partition -DiskNumber 0 -Size 5GB -DriveLetter E
 Format-Volume -DriveLetter E -FileSystem NTFS -NewFileSystemLabel "Storage"
 
 # disable USB 
