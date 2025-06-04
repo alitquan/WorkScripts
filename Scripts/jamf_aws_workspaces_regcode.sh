@@ -48,6 +48,6 @@ EOF
 /bin/chmod 644 "$registration_path"
 
 # appending to system logs and temp log
-/usr/bin/logger "QVT Jamf --- AWS Workspace Registration Script $version has been run successfully."
+/usr/bin/logger "abc Jamf --- AWS Workspace Registration Script $version has been run successfully."
 /usr/bin/touch $jamf_logs
 /bin/echo "$(date) --- AWS Workspace Registration Script $version has been run successfully." >> $jamf_logs
