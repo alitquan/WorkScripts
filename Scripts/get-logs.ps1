@@ -1,5 +1,6 @@
 # Define the date to filter logs after
-$date = Get-Date "2025-06-03"
+$selected="2025-06-20"
+$date = Get-Date $selected
 
 $system = Get-EventLog -LogName System -After $date 
 $application = Get-EventLog -LogName Application -After $date
@@ -34,7 +35,7 @@ $logChannels = @(
 foreach ($logChannel in $logChannels) { 
     Write-Host "`n----- Logs from $logChannel -----"
     try {
-        $logEvents = Get-WinEvent -FilterHashtable @{LogName=$logChannel; StartTime="2025-06-01"} -ErrorAction Stop
+        $logEvents = Get-WinEvent -FilterHashtable @{LogName=$logChannel; StartTime=$selected} -ErrorAction Stop
         $logEvents | Select-Object TimeCreated, Id, LevelDisplayName, Message | Format-List
         $logChannelClean = $logChannel-replace '[\\/]', ''
         $logEvents | export-csv -Path "C:\Windows\SystemTemp\$logChannelClean_$dateString.csv"
